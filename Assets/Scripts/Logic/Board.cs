@@ -22,6 +22,7 @@ public class Board {
     const uint BlackQueensideCastle = 0b1000;
 
     public bool IsLegal(Move move) {
+        return true;
         int tm = ColorToMove;
         int opp = tm == White ? Black : White;
         int mv = PieceOn(move.from);
@@ -317,20 +318,19 @@ public class Board {
     }
 
     public void PlayMove(Move move) {
-        EnPassant = Coord.Null;
         int moved;
         int cap;
         RemovePiece(move.from, out moved);
         RemovePiece(move.to, out cap);
 
         AddPiece(move.to, moved);
-        if (move.flag == Move.MoveFlag.EnPassant) {
+        if (Piece.Type(moved) == Piece.Pawn && move.to.Equals(EnPassant)) {
             RemovePiece(new Coord(move.to.file, move.from.rank), out _);
         }
 
         if (Piece.Type(moved) == Piece.King
             && Math.Abs(move.from.GetIndex() - move.to.GetIndex()) == 2
-            && move.flag == Move.MoveFlag.Castling)
+            /* && move.flag == Move.MoveFlag.Castling */)
             {
                 // Castle
                 int rook;
@@ -358,13 +358,15 @@ public class Board {
                 }
             }
 
-        if (move.flag == Move.MoveFlag.Promotion) {
+        int lr = ColorToMove == White ? 7 : 0;
+        if (move.flag == Move.MoveFlag.Promotion || (Piece.Type(moved) == Piece.Pawn && move.to.rank == lr)) {
             // TODO Promotion upgrade here too
             RemovePiece(move.to, out _);
             int pcolor = ColorToMove == White ? Piece.White : Piece.Black;
             AddPiece(move.to, pcolor | Piece.Queen);
         }
 
+        EnPassant = Coord.Null;
         if (Piece.Type(moved) == Piece.Pawn
             && Math.Abs(move.from.rank - move.to.rank) == 2) {
                 EnPassant = new Coord(move.from.file, (move.from.rank + move.to.rank)/2);
